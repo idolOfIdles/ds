@@ -20,6 +20,7 @@ import numpy as np
 import json
 from nltk import flatten
 from itertools import groupby
+import re
 
 train = pd.read_csv('train.csv')
 test  = pd.read_csv('test.csv')
@@ -38,6 +39,10 @@ for i in range(15):
 
 def toJson(col):
     return train[col].apply(lambda x: x.replace("'", "\"").replace("\\x",'') if type(x) is str else x).apply(lambda x: json.loads(x) if type(x) is str else [])
-        
+
+def stringToArray(str):
+    p = re.compile('\'name\': \'[^\']+\'')
+    names = map(lambda x: x.split(':')[1], p.findall(str))
+    return list(map(lambda x: x.strip()[1:len(x.strip())-1] , names))        
 
 
