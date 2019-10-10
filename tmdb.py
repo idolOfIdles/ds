@@ -32,4 +32,12 @@ count_genres = [ (i, len(list(c))) for i,c in groupby(sorted(flatten(genres_list
 sorted_count_genres = sorted(count_genres, key=lambda x: x[1], reverse=1)
 
 
+for i in range(15):
+    train['genre_' + sorted_count_genres[i][0]] = train['gnr'].apply(lambda x: 1 if sorted_count_genres[i][0] in x else 0)
+
+
+def toJson(col):
+    return train[col].apply(lambda x: x.replace("'", "\"").replace("\\x",'') if type(x) is str else x).apply(lambda x: json.loads(x) if type(x) is str else [])
+        
+
 
