@@ -28,21 +28,24 @@ test  = pd.read_csv('test.csv')
 train['gnr'] = train['genres'].apply(lambda x: x.replace("'", "\"") if type(x) is str else x)
 train['gnr'] = train['gnr'].apply(lambda x : list(map(lambda g: g['name'], json.loads(x))) if type(x) is str else []) 
 
-genres_list = list(train['gnr'].values)
-count_genres = [ (i, len(list(c))) for i,c in groupby(sorted(flatten(genres_list)))]
-sorted_count_genres = sorted(count_genres, key=lambda x: x[1], reverse=1)
+def toJson(str, rx):
+    #p = re.compile('\'name\': \'[^\']+\'') 
+    p = re.compile(rx) 
+    rs = p.findall(str)
+    quotedNames = map(lambda x : x.split(":")[1].strip(), rs)
+    return list(map(lambda x: x[1:len(x)-1], quotedNames))
+    
+def processListStringColumns(col, rx, count):
+    backupColName = 'backup_' + col 
+    sorted_count_map = getSortedCountMap(col,rx)
+    for i in range(count):
+        train[ col+'_'+ sorted_count_map[i][0]] = train[backupColName].apply(lambda x: 1 if sorted_count_map[i][0] in x else 0)
 
-
-for i in range(15):
-    train['genre_' + sorted_count_genres[i][0]] = train['gnr'].apply(lambda x: 1 if sorted_count_genres[i][0] in x else 0)
-
-
-def toJson(col):
-    return train[col].apply(lambda x: x.replace("'", "\"").replace("\\x",'') if type(x) is str else x).apply(lambda x: json.loads(x) if type(x) is str else [])
-
-def stringToArray(str):
-    p = re.compile('\'name\': \'[^\']+\'')
-    names = map(lambda x: x.split(':')[1], p.findall(str))
-    return list(map(lambda x: x.strip()[1:len(x.strip())-1] , names))        
+def getSortedCountMap(col, rx):
+    backupColName = 'backup_' + col 
+    train[backupColName] = train[col].apply(lambda x: toJson(x, rx) if type(x) is str else [])
+    sortedList =  sorted(flatten(list(train[backupColName].values))) 
+    countMap = [ (i, len(list(c))) for i,c in groupby(sortedList)]
+    return sorted(countMap, key=lambda x: x[1], reverse=1)
 
 
